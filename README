@@ -1,0 +1,33 @@
+// CORE PYTHON FILES // ============================================================================
+
+The UM, IM and IHM classes all take an input matrix which contains possible allocations of resources to activities. Columns are resource-activity allocations for each agent ("money spent working by A", "time spent gardening by B") and rows are possible combinations (e.g. for a single resource time: "A spent 50% of her time gardening, 50% of her time working; B spent 25% of his time gardening, 75% of his time working"). The objective of the UM, IM and IHM classes is to select the best row according to their constraints (e.g. heterogeneous preferences in IHM). 
+
+unitaryHouseholdClass.py -- This contains the unitary household model (UM). The household class takes two agents and a matrix of possible resource allocations, then selects the best allocation according to a single set of preferences (uses first agent's preferences), updates agent resources and returns the best allocation.
+
+unitaryClass.py -- This contains the individual model (IM). It's the same as unitaryHouseholdClass.py except it deals with just one agent. 
+
+bargainClass.py -- This contains the bargain associated with the intra-household model (IHM). Bargain is executed in two steps (based largely on Smith and Chavas (1999) and Cudeville (2015)). First, for a fixed set of thetas (% of private good traded between agents), the best allocation of resources to activities is selected by iteratively converging on the intersection of agents' maximized utility functions. (You'd like to be able to do this a different way, because it's the one part of the model that's excruciatingly slow, but I haven't been able to do it.) Then you have the best allocation for multiple thetas, and you pick the best theta/allocation using an objective function involving agent bargaining power. This file finds the best allocation, updates resources and returns allocation.
+
+agentClass.py -- Agents have IDs, households (blank if IM), resources that are either used as inputs (private goods like money) or not (public goods like a clean house), and weights for preferences and conformity. They also have a vector of inputs assigned to activities (selected via the classes above), a theta they've agreed to if they're IHM agents, and a list of norm populations they are a part of. They can report their status and calculate the distance between their behavior and the behavior of their associated norm populations. "Activity params" holds information about the agent like the wage she receives for doing a job. Other stuff is in this file that I didn't get to. For example, "adjustAttribute" and "alpha" will be for agent learning; "spousalThreshold" is how much agents care about what their spouses do, because conforming to your own norm is different than wanting your partner to conform to their own norm (think modesty policing from husbands to wives). 
+
+normClass.py -- Norms are just collections of agents and the associated statistics about their behavior. This class maintains a matrix for a norm where rows are components (i.e. stuff you care about like how much money people spend on their cars) and columns are what values agents in the norm have for those components (e.g. Agent 1 spent 40k, Agent 2 spent 9k, Agent 3 spent ... ) I'd like to have multiple ways of calculating distance between an agent and its norm, but for now there's just Euclidean distance and distance from the top quartile of the population (e.g. "Look at the 25% richest"). 
+
+runtimeFunctions.py -- Supporting functions broken up into initialization, bargain, agent, and activity functions (I don't have an activity class). You can load behavior from a previous simulation, which comes in handy if you want to start at a stable state. You can generate the allocation matrix discussed at the beginning of this file. You can check to see if agent behavior has stabilized and stop if so (this guy doesn't work very well). You can generate norm weights for an agent if you want just a broad conformity weight (I never got more complicated than this). And lastly you can decide how to generate payoff from activities -- I have simple private/public functions and some frequency-dependent functions that change depending on how many agents do an activity. The bin version of the frequency-dependent function can be used to do some pseudo-spatial stuff. 
+
+configManager.py -- Tell everyone what configuration file you want to use. I'm sure there's a better way.
+
+
+// CONFIG AND RUN FILES // ============================================================================
+
+runIHM.py -- Runs IHM with accompanying stuff. First you generate your populations and norms; then you create or update your norm matrices; then you head into the household loop where you generate possible allocations and select the best one using UM, IM or IHM; then you update data; then you're either done or you do it again. You can also change external factors here like wages. This is basically the same file as the one below but it has some commented examples on how to use frequency-dependent activities and spousal thresholds.
+
+runWageExample.py -- Runs an example simulation for changing wage. If you want to run for other wage increases, pass wrapNrun() a different number. wrapNrun() also tells run() whether you want to use IHM, UM or IM.
+
+CM_config*.py -- These are the configuration files used to set up simulations seen in the associated paper. They're pretty junky in that it's largely the same file with small changes made.
+
+*.csv -- moderateConformity.csv, highConformity.csv and moderatePreferences.csv are all used by the config files to parameterize agents according to the "MP" and "CM" conditions in the associated paper. initialTransfer.csv is needed to initialize agents.
+
+// R FILES // ============================================================================
+
+generateAgentParameterizationFiles.R -- generate preferences and conformity for agents.
+
